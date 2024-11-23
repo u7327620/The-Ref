@@ -1,4 +1,3 @@
-import discord, logging
 from discord.ext import commands
 
 class TestingCog(commands.Cog):
