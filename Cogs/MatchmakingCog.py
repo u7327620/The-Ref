@@ -13,12 +13,15 @@ class MatchmakingCog(commands.Cog):
 
     @commands.hybrid_command(name="queue", aliases=["q"], description="Adds a player to the queue")
     async def join_queue(self, ctx: commands.Context):
-        if ctx.author.id not in self.playerQueue:
-            rc = self.bot.get_cog("RankingsCog")
-            self.playerQueue[ctx.author.id] = [rc.lookup(ctx), INITIAL_WIDTH]
-            await ctx.send(f"Name: {ctx.author.name}, Elo: {self.playerQueue[ctx.author.id][0]} added to queue!")
-        else:
-            await ctx.send(f"{ctx.author.name} is already in queue!")
+        try:
+            if ctx.author.id not in self.playerQueue:
+                rc = self.bot.get_cog("RankingsCog")
+                self.playerQueue[ctx.author.id] = [rc.lookup(ctx), INITIAL_WIDTH]
+                await ctx.send(f"Name: {ctx.author.name}, Elo: {self.playerQueue[ctx.author.id][0]} added to queue!")
+            else:
+                await ctx.send(f"{ctx.author.name} is already in queue!")
+        except ClientException:
+            await ctx.send(f"{ctx.author.name} couldn't be added to queue! Perchance they're unlinked?")
 
 async def setup(bot: commands.Bot):
     # If Ranking cog not preloaded, could be goofy!
