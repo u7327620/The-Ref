@@ -11,12 +11,16 @@ class RankingsCog(commands.Cog):
         self.connection = create_connection("rankings.db")
         self.cursor = self.connection.cursor()
 
-    @commands.hybrid_command(name="lookup", description="Looks up a player or yourself!")
+    @commands.hybrid_command(name="lookup", description="Enter player name or leave blank for self!")
     async def lookup(self, ctx: commands.Context, *, name: Optional[str]):
         try:
             if name is not None:
                 self.cursor.execute("SELECT elo FROM players WHERE name like ?", (name,))
-                await ctx.send(f"{name}'s elo is: {str(self.cursor.fetchone())[1:-2]}")
+                ret_elo = str(self.cursor.fetchone())
+                if ret_elo[1:-2] == 'o':
+                    await ctx.send(f"{name} isn't in the database.")
+                else:
+                    await ctx.send(f"{name}'s elo is: {ret_elo[1:-2]}")
             else:
                 self.cursor.execute("SELECT elo FROM players WHERE discord_id like ?", (ctx.author.id,))
                 await ctx.send(f"your elo is: {str(self.cursor.fetchone())[1:-2]}")
