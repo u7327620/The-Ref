@@ -1,4 +1,3 @@
-import logging
 from discord import ClientException
 from discord.ext import commands
 from Cogs.RankingsCog import RankingsCog
@@ -14,10 +13,12 @@ class MatchmakingCog(commands.Cog):
     @commands.hybrid_command(name="queue", aliases=["q"], description="Adds a player to the queue")
     async def join_queue(self, ctx: commands.Context):
         try:
+            lookup_cmd = self.bot.get_command("elo_lookup")
             if ctx.author.id not in self.playerQueue:
-                rc = self.bot.get_cog("RankingsCog")
-                self.playerQueue[ctx.author.id] = [rc.lookup(ctx), INITIAL_WIDTH]
-                await ctx.send(f"Name: {ctx.author.name}, Elo: {self.playerQueue[ctx.author.id][0]} added to queue!")
+                elo = await lookup_cmd.__call__(ctx, name_or_id=str(ctx.author.id))
+                self.playerQueue[ctx.author.id] = [elo, INITIAL_WIDTH]
+                elo = self.playerQueue[ctx.author.id][0]
+                await ctx.send(f"Name: {ctx.author.name}, Elo: {elo} added to queue!")
             else:
                 await ctx.send(f"{ctx.author.name} is already in queue!")
         except ClientException:
