@@ -1,10 +1,7 @@
 import discord
 from discord import ClientException
 from discord.ext import commands, tasks
-from Cogs.RankingsCog import RankingsCog
-
 INITIAL_WIDTH = 100
-
 
 async def match_made_helper(player: tuple, opponent: tuple):
     assert player[0] != opponent[0]  # ids are not the same
@@ -14,7 +11,6 @@ async def match_made_helper(player: tuple, opponent: tuple):
     return player_elo <= opponent_elo + search or player_elo >= opponent_elo - search
 
 class MatchmakingCog(commands.Cog):
-    """Relies on RankingsCog"""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.playerQueue = {} # dict(playerID: int -> [elo: int, searchWidth: int]
@@ -63,13 +59,5 @@ class MatchmakingCog(commands.Cog):
         await self.increase_search_range()
         await self.match_players(ctx)
 
-    @commands.hybrid_command(name="test_queue", description="Adds Nazzern to the queue")
-    async def test_join_queue(self, ctx: commands.Context):
-        if ctx.author.id == 312158176126566401:
-            self.playerQueue[1211615230820360203] = [1500, INITIAL_WIDTH]
-            elo = self.playerQueue[1211615230820360203][0]
-            await ctx.send(f"Name: {ctx.author.name}, Elo: {elo} added to queue!")
-
 async def setup(bot: commands.Bot):
-    # If Ranking cog not preloaded, could be goofy!
     await bot.add_cog(MatchmakingCog(bot))
