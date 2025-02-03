@@ -1,6 +1,9 @@
+import datetime
 import logging
 from typing import Optional
 import sqlite3
+
+import discord
 from discord.ext import commands
 
 INITIAL_ELO = 1500
@@ -49,6 +52,18 @@ class RankingsCog(commands.Cog):
         except sqlite3.IntegrityError as e:
             logging.log(logging.ERROR, e)
             await ctx.send("Likely already linked! Ask Lostmail for further help!")
+
+    @commands.hybrid_command(name="leaderboard", description="Displays the top 15 players")
+    async def leaderboard(self, ctx: commands.Context):
+        try:
+            self.cursor.execute("SELECT * FROM players ORDER BY elo DESC LIMIT 15")
+            embed = discord.Embed(title="Top 15", timestamp=datetime.datetime.now())
+            for index, row in enumerate(self.cursor.fetchall()):
+                embed.add_field(name=f"{index+1}. {row[2]} - {row[3]}", value="", inline=False)
+            await ctx.send(embed=embed)
+        except sqlite3.OperationalError as e:
+            logging.log(logging.ERROR, e)
+            await ctx.send("Something went wrong...")
 
 def create_connection(path):
     connection = None

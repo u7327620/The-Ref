@@ -1,3 +1,4 @@
+import discord
 from discord import ClientException
 from discord.ext import commands, tasks
 from Cogs.RankingsCog import RankingsCog
@@ -24,6 +25,9 @@ class MatchmakingCog(commands.Cog):
             lookup_cmd = self.bot.get_command("elo_lookup")
             if ctx.author.id not in self.playerQueue:
                 elo = await lookup_cmd.__call__(ctx, name_or_id=str(ctx.author.id))
+                if elo == 0:
+                    await ctx.send(f"{ctx.author.name} couldn't be added to queue! Perchance they're unlinked?")
+                    return
                 if len(self.playerQueue) == 0:
                     self.matchmaking_loop.start(ctx)
                 self.playerQueue[ctx.author.id] = [elo, INITIAL_WIDTH]
@@ -40,7 +44,9 @@ class MatchmakingCog(commands.Cog):
                 if player[0] == opponent[0]:
                     pass
                 elif await match_made_helper(player, opponent):
-                    await ctx.send(f"Match made for @{player[0]} ({player[1][0]}) and @{opponent[0]} ({opponent[1][0]})!")
+                    message = discord.message
+                    message.mentions = []
+                    await ctx.send(f"Match made for <@{player[0]}> ({player[1][0]}) and <@{opponent[0]}> ({opponent[1][0]})!")
                     self.playerQueue.pop(opponent[0])
                     self.playerQueue.pop(player[0])
                     if len(self.playerQueue) == 0:
