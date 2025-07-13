@@ -1,2 +1,2 @@
-# LostGloves
-Purple_Gloves Discord Bot
+# The Ref
+The final discord bot 
