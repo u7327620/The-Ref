@@ -1,13 +1,11 @@
 import asyncio, logging, sys, os
-import sqlite3
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import Intents
-from database import DatabaseManager
 
 # Put bot keys in a .env file in same-directory as main.py
 load_dotenv()
-token = os.getenv("API_KEY")
+token = os.getenv("TOKEN")
 
 # All intents bar presences and members
 intents = Intents.default()
@@ -28,14 +26,10 @@ async def load_cogs():
     for file in os.listdir("./Cogs"):
         if file.endswith(".py"):
             await client.load_extension(f"Cogs.{file[:-3]}")
-
-async def load_database():
-    client.database = DatabaseManager(connection=sqlite3.connect(
-        f"{os.path.realpath(os.path.dirname(__file__))}/database/rankings.db"))
+    logging.log(logging.DEBUG, client.all_commands)
 
 async def main():
     async with client:
-        await load_database()
         await load_cogs()
         await client.start(token)
 

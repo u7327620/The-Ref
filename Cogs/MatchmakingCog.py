@@ -17,7 +17,8 @@ class MatchmakingCog(commands.Cog):
 
     @commands.hybrid_command(name="queue", aliases=["q"], description="Adds a player to the queue")
     async def join_queue(self, ctx: commands.Context):
-        try:
+        await ctx.send(f"Under construction")
+        """try:
             lookup_cmd = self.bot.get_command("elo_lookup")
             if ctx.author.id not in self.playerQueue:
                 elo = await lookup_cmd.__call__(ctx, name_or_id=str(ctx.author.id))
@@ -32,7 +33,7 @@ class MatchmakingCog(commands.Cog):
             else:
                 await ctx.send(f"{ctx.author.name} is already in queue!")
         except ClientException:
-            await ctx.send(f"{ctx.author.name} couldn't be added to queue! Perchance they're unlinked?")
+            await ctx.send(f"{ctx.author.name} couldn't be added to queue! Perchance they're unlinked?")"""
 
     async def match_players(self, ctx: commands.Context):
         for index, player in enumerate(self.playerQueue.items()):
