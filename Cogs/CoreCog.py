@@ -1,5 +1,6 @@
 from discord.ext import commands
 
+
 class CoreCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -8,6 +9,7 @@ class CoreCog(commands.Cog):
     async def sync(self, ctx: commands.Context):
         """Adds commands to the application interface (/ commands)"""
         if ctx.author.id == 312158176126566401:
+            await self.bot.tree.sync(guild=None)
             await self.bot.tree.sync(guild=ctx.guild)
             await ctx.send(f"Successfully synced guild commands")
         else:

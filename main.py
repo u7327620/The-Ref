@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord import Intents
 
 # Put bot keys in a .env file in same-directory as main.py
-load_dotenv()
+load_dotenv(f"{os.getcwd()}/config.env")
 token = os.getenv("TOKEN")
 
 # All intents bar presences and members
@@ -16,7 +16,6 @@ client = commands.Bot(command_prefix="gimme ", intents=intents)
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
 handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 root.addHandler(handler)

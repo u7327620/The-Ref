@@ -1,17 +1,19 @@
 from discord.ext import commands
-from database import DatabaseManager
+import requests
 
 class PlayerStatsCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.db = DatabaseManager()
 
-    @commands.hybrid_command(name="add_player", alias=["add"], description="Adds a player to the database")
-    async def add_player(self, ctx: commands.Context, discord_id: int, name: str):
-        if await self.db.set_player(discord_id, name.lower()):
-            await ctx.send(f":moyai:")
+    @commands.hybrid_command(name="get_stats", alias=["get"], description="Retrieves TFC fighter profile")
+    async def get_stats(self, ctx: commands.Context, name: str):
+        response = requests.get(f"https://github.com/u7327620/TMA_Records/raw/refs/heads/main/Data/Fighters/{name.lower()}_Database.txt")
+        if response.status_code == 404:
+            return await ctx.send(f"No TFC fighter \"{name}\" found")
+        elif response.status_code != 200:
+            return await ctx.send(f"error {response.status_code} looking up {name}")
         else:
-            await ctx.send(f":no_entry:")
+            return await ctx.send(response.text)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(PlayerStatsCog(bot))
