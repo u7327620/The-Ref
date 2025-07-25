@@ -1,6 +1,4 @@
 import os, discord.interactions
-from http.client import HTTPException
-
 from discord.ext import commands
 from discord.ext.commands import Cog
 from dotenv import load_dotenv
@@ -14,20 +12,20 @@ display_id = int(os.getenv("CLIP_DISPLAY_CHANNEL"))
 
 class GifView(discord.ui.View):
     @discord.ui.button(label="Approve", style=discord.ButtonStyle.green, emoji="✅") #type: ignore
-    async def approve_button_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.client.get_channel(display_id).send(interaction.message.content)
+    async def approve_button_callback(self, ctx: discord.Interaction, button: discord.ui.Button):
+        await ctx.client.get_channel(display_id).send(ctx.message.content)
         try:
-            await interaction.message.delete()
+            await ctx.message.delete()
         except discord.HTTPException:
-            await interaction.response.send_message("Couldn't delete the message :man_shrugging:", ephemeral=True)
+            await ctx.response.send_message("Couldn't delete the message :man_shrugging:", ephemeral=True)
 
 
     @discord.ui.button(label="NOT WORTHY", style=discord.ButtonStyle.red, emoji="❌") #type: ignore
-    async def disapprove_button_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def disapprove_button_callback(self, ctx: discord.Interaction, button: discord.ui.Button):
         try:
-            await interaction.message.delete()
+            await ctx.message.delete()
         except discord.HTTPException:
-            await interaction.response.send_message("Couldn't delete the message :man_shrugging:", ephemeral=True)
+            await ctx.response.send_message("Couldn't delete the message :man_shrugging:", ephemeral=True)
 
 class GifCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
