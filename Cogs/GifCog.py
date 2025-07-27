@@ -1,3 +1,4 @@
+import logging
 import os, discord.interactions
 from discord.ext import commands
 from discord.ext.commands import Cog
@@ -16,7 +17,8 @@ class GifView(discord.ui.View):
         await ctx.client.get_channel(display_id).send(ctx.message.content)
         try:
             await ctx.message.delete()
-        except discord.HTTPException:
+        except Exception as e:
+            logging.log(logging.ERROR, f"Failed to delete message via button, error: {e}")
             await ctx.response.send_message("Couldn't delete the message :man_shrugging:", ephemeral=True)
 
 
@@ -24,7 +26,8 @@ class GifView(discord.ui.View):
     async def disapprove_button_callback(self, ctx: discord.Interaction, button: discord.ui.Button):
         try:
             await ctx.message.delete()
-        except discord.HTTPException:
+        except Exception as e:
+            logging.log(logging.ERROR, f"Failed to delete message via button, error: {e}")
             await ctx.response.send_message("Couldn't delete the message :man_shrugging:", ephemeral=True)
 
 class GifCog(commands.Cog):

@@ -13,12 +13,11 @@ intents.message_content = True
 client = commands.Bot(command_prefix="gimme ", intents=intents)
 
 # Logging errors
-root = logging.getLogger()
-root.setLevel(logging.DEBUG)
+logger = logging.getLogger("discord")
+logger.setLevel(logging.ERROR)
 handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-root.addHandler(handler)
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logger.addHandler(handler)
 
 # discord.py v2 async startup
 async def load_cogs():
