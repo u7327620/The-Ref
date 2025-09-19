@@ -45,7 +45,7 @@ class GifCog(commands.Cog):
                 await self.request_approval(f"{embed.url}, {message.jump_url} by {message.author}")
 
     async def request_approval(self, text:str):
-        await self.bot.get_channel(approval_id).send(text, view=GifView())
+        await self.bot.get_channel(approval_id).send(text, view=GifView(timeout=None))
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(GifCog(bot))
