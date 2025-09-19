@@ -122,7 +122,7 @@ class BetCog(commands.Cog):
                 name = f"{f1} vs {f2}"
                 if row[3] is not None:
                     name += f" - {row[3]} won"
-                name += " {row[0]}"
+                name += f" {row[0]}"
                 emb.add_field(name=name, value=f"${total_f1:,} vs ${total_f2:,}",
                               inline=False)
             emb.set_author(name=f"Requested by {ctx.user}", icon_url=ctx.user.display_avatar.url)
@@ -180,7 +180,7 @@ class BetCog(commands.Cog):
                 else:
                     temp_name = f"${row[2]:,} on {row[0]} by {row[3]} ({row[1]})"
                 if not match_id:
-                    temp_value = f"{row[7]} vs {row[8]}"
+                    temp_value = f"{row[8]} vs {row[9]}"
                 emb.add_field(name=temp_name, value=temp_value, inline=False)
             emb.set_author(name=f"Requested by {ctx.user}", icon_url=ctx.user.display_avatar.url)
             total_pages = Pagination.compute_total_pages(len(rows), PAGE_LENGTH)
