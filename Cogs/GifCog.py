@@ -2,10 +2,7 @@ import logging
 import os, discord.interactions
 from discord.ext import commands
 from discord.ext.commands import Cog
-from dotenv import load_dotenv
 
-# Put bot keys in a .env file in same-directory as main.py
-load_dotenv(f"{os.getcwd()}/config.env")
 gif_formats = ["video", "video/mp4", "video/quicktime", "video/mov", "image/gif", "gifv"]
 submission_id = int(os.getenv("CLIP_SUBMISSION_CHANNEL"))
 approval_id = int(os.getenv("CLIP_APPROVAL_CHANNEL"))
