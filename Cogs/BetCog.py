@@ -122,6 +122,7 @@ class BetCog(commands.Cog):
                 name = f"{f1} vs {f2}"
                 if row[3] is not None:
                     name += f" - {row[3]} won"
+                name += " {row[0]}"
                 emb.add_field(name=name, value=f"${total_f1:,} vs ${total_f2:,}",
                               inline=False)
             emb.set_author(name=f"Requested by {ctx.user}", icon_url=ctx.user.display_avatar.url)
