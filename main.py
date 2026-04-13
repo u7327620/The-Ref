@@ -9,6 +9,7 @@ token = os.getenv("TOKEN")
 
 # All intents bar presences and members
 intents = Intents.default()
+# noinspection PyDunderSlots
 intents.message_content = True
 client = commands.Bot(command_prefix="gimme ", intents=intents)
 

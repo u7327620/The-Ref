@@ -137,7 +137,8 @@ class BetCog(commands.Cog):
         """Adds a match to the database"""
         cursor = self.bets.cursor()
         try:
-            cursor.execute("INSERT INTO matches (fighter_1, fighter_2) VALUES (?, ?)", (fighter1.lower(), fighter2.lower()))
+            cursor.execute("SELEC")
+            cursor.execute("INSERT INTO matches (fighter_1_id, fighter_2_id) VALUES (?, ?)", (fighter1.lower(), fighter2.lower()))
             self.bets.commit()
             return await ctx.response.send_message(f"Added match {fighter1} vs {fighter2}", ephemeral=True)
         except sqlite3.Error:
