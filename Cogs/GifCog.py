@@ -1,13 +1,13 @@
 import logging
 import os, discord.interactions
 from discord.ext import commands
-from discord.ext.commands import Cog
 
 gif_formats = ["video", "video/mp4", "video/quicktime", "video/mov", "image/gif", "gifv"]
 submission_id = int(os.getenv("CLIP_SUBMISSION_CHANNEL"))
 approval_id = int(os.getenv("CLIP_APPROVAL_CHANNEL"))
 display_id = int(os.getenv("CLIP_DISPLAY_CHANNEL"))
 
+print(submission_id, approval_id, display_id)
 class GifView(discord.ui.View):
     @discord.ui.button(label="Approve", style=discord.ButtonStyle.green, emoji="✅") #type: ignore
     async def approve_button_callback(self, ctx: discord.Interaction, button: discord.ui.Button):
@@ -31,7 +31,7 @@ class GifCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @Cog.listener()
+    @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.channel.id != submission_id:
             return
