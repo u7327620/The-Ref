@@ -6,14 +6,12 @@ class CoreCog(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(name="sync", description="syncs guild commands")
+    @commands.is_owner()
     async def sync(self, ctx: commands.Context):
         """Adds commands to the application interface (/ commands)"""
-        if ctx.author.id == 312158176126566401:
-            await self.bot.tree.sync()
-            await self.bot.tree.sync(guild=ctx.guild)
-            await ctx.send(f"Successfully synced: {", ".join(self.bot.all_commands.keys())}")
-        else:
-            await ctx.send(f"Only LostMail can execute this command")
+        await self.bot.tree.sync()
+        await self.bot.tree.sync(guild=ctx.guild)
+        await ctx.send(f"Successfully synced: {", ".join(self.bot.all_commands.keys())}")
 
     @commands.hybrid_command(name="ping")
     async def ping(self, ctx: commands.Context):

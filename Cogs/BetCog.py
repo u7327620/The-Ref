@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Callable, Optional
 import discord.interactions
 import sqlite3
@@ -74,38 +75,99 @@ class Pagination(discord.ui.View):
     def compute_total_pages(total_results: int, results_per_page: int) -> int:
         return ((total_results - 1) // results_per_page) + 1
 
+@dataclass
+class Bet:
+    fighter_id: int
+    id: int
+    amount: int
+    punter: str
+    match_id: int
+    bet_received: bool = False
+    payed_out: bool = False
+
+@dataclass
+class Match:
+    id: int
+    fighter_1_id: int
+    fighter_2_id: int
+    victor_id: Optional[str] = None
+    no_winner: bool = False
+
+@dataclass
+class Fighter:
+    id: int
+    toribash_names: list[str]
+    discord_names: list[str]
+    name: str
+
+    def __init__(self, id: int, toribash_names: str, discord_names: str, name: str):
+        self.id = id
+        self.toribash_names = toribash_names.split(", ")
+        self.discord_names = discord_names.split(", ")
+        self.name = name
+
+class Queries:
+    def __init__(self):
+        self.bets = sqlite3.connect("database/bets.db")
+
+    def bets_pending_payout(self):
+        cursor = self.bets.cursor()
+        return cursor.execute("SELECT * FROM bets "
+                               f"WHERE match_id IN (SELECT id FROM matches WHERE victor_id IS bets.fighter_id) "
+                               f"AND bet_received = 1 AND payed_out = 0").fetchall()
+
+    def bet_total_for_fighter_in_match(self, match_id: int, fighter_id: int):
+        cursor = self.bets.cursor()
+        return cursor.execute("SELECT SUM(amount) FROM bets WHERE match_id = ? AND fighter_id = ?",
+                              (match_id, fighter_id,)).fetchone()[0]
+
+    def match_bets_tc_total(self, match_id: int):
+        cursor = self.bets.cursor()
+        return cursor.execute("SELECT SUM(amount) FROM bets WHERE match_id = ?",
+                              (match_id,)).fetchone()[0]
+
+    def fighter_name(self, fighter_id: int):
+        cursor = self.bets.cursor()
+        return cursor.execute("SELECT name FROM fighters WHERE id = ?", (fighter_id,)).fetchone()[0]
+
+    def other_fighter_in_match(self, fighter_id: int, match_id: int):
+        cursor = self.bets.cursor()
+        return cursor.execute("SELECT name FROM fighters WHERE id IS (SELECT fighter_id FROM bets WHERE match_id = ? AND fighter_id != ?)"
+                              ,(match_id, fighter_id)).fetchone()[0]
+
+    def fighter_id(self, fighter_name: str):
+        cursor = self.bets.cursor()
+        return cursor.execute("SELECT name FROM fighters WHERE ',' || LOWER(discord_names) || ',' LIKE ? "
+                              "OR ',' || LOWER(toribash_names) || ',' LIKE ?",
+                              fighter_name.lower()).fetchone()[0]
+
 class BetCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.bets = sqlite3.connect("database/bets.db")
+        self.query = Queries()
 
-    @app_commands.command(name="calculate_payouts", description="calculates all bets needing to be payed out")
+    @app_commands.command(name="calculate_payouts", description="list of bets ready to pay out")
     @default_permissions(ban_members=True)
     async def calculate_payouts(self, ctx: discord.Interaction):
         """Calculates all bets needing to be payed out"""
-        # 1. Get all correct bets on finished matches which are not yet paid out
-        cursor = self.bets.cursor()
-        correct_unpaid_bets = cursor.execute("SELECT * FROM bets WHERE match_id IN (SELECT id FROM matches WHERE victor IS bets.fighter) AND bet_received = 1 AND payed_out = 0").fetchall()
-
-        # 2. Calculate for each bet
         out = []
-        for bet in correct_unpaid_bets:
-            f_name = bet[0]
-            bet_amt = bet[2]
-            punter = bet[3]
-            f_total = cursor.execute("SELECT SUM(amount) FROM bets WHERE match_id = ? AND fighter = ?", (bet[4], f_name)).fetchone()[0]
-            match_total = cursor.execute("SELECT SUM(amount) FROM bets WHERE match_id = ?", (bet[4],)).fetchone()[0]
+        for item in correct_unpaid_bets:
+            bet = Bet(*item)
+            f_total = self.query.bet_total_for_fighter_in_match(bet.match_id, bet.fighter_id)
+            match_total = self.query.match_bets_tc_total(bet.match_id)
             opp_total = match_total - f_total
-            payout = int(bet_amt + 0.85 * (bet_amt / f_total) * opp_total)
-            out.append(f"({bet[1]}) {punter} won ${payout:,} on {f_name} in ({bet[4]}) with a bet of ${bet_amt:,}")
+            payout = int(bet.amount + 0.85 * (bet.amount / f_total) * opp_total)
+            out.append(f"{bet.punter} won ${payout:,} betting on {self.query.fighter_name(bet.fighter_id)}"
+                       f"in a match against {self.query.other_fighter_in_match(bet.fighter_id, bet.match_id)}"
+                       f"with a bet of ${bet.amount:,}")
         return await ctx.response.send_message("\n".join(out) if out else "No payouts to calculate", ephemeral=True)
 
     # ----------------- matches ----------------- #
     @app_commands.command(name="get_matches", description="lists all matches")
     async def get_matches(self, ctx: discord.Interaction):
         async def get_page(page: int):
-            cursor = self.bets.cursor()
-            all_bets = cursor.execute("SELECT fighter, SUM(amount), match_id FROM bets GROUP BY match_id, fighter").fetchall()
+            cursor = self.query.bets.cursor()
+            all_bets = cursor.execute("SELECT fighter_id, SUM(amount), match_id FROM bets GROUP BY match_id, fighter_id").fetchall()
             cursor.execute("SELECT * FROM matches order by id desc")
             rows = cursor.fetchmany(50)
             emb = discord.Embed(title="Matches", color=0xff0000)
@@ -119,10 +181,10 @@ class BetCog(commands.Cog):
                     elif f == f2 and match == row[0]:
                         total_f2 = bet
 
-                name = f"{f1} vs {f2}"
+                name = f"{self.query.fighter_name(f1)} vs {self.query.fighter_name(f2)}"
                 if row[3] is not None:
-                    name += f" - {row[3]} won"
-                name += f" {row[0]}"
+                    name += f" - {self.query.fighter_name(row[3])} won"
+                name += f" match_id: {row[0]}"
                 emb.add_field(name=name, value=f"${total_f1:,} vs ${total_f2:,}",
                               inline=False)
             emb.set_author(name=f"Requested by {ctx.user}", icon_url=ctx.user.display_avatar.url)
@@ -135,10 +197,10 @@ class BetCog(commands.Cog):
     @default_permissions(ban_members=True)
     async def add_match(self, ctx: discord.Interaction, fighter1: str, fighter2: str):
         """Adds a match to the database"""
-        cursor = self.bets.cursor()
+        cursor = self.query.bets.cursor()
         try:
-            cursor.execute("SELEC")
-            cursor.execute("INSERT INTO matches (fighter_1_id, fighter_2_id) VALUES (?, ?)", (fighter1.lower(), fighter2.lower()))
+            cursor.execute("INSERT INTO matches (fighter_1_id, fighter_2_id) VALUES (?, ?)",
+                           (self.query.fighter_id(fighter1), self.query.fighter_id(fighter2)))
             self.bets.commit()
             return await ctx.response.send_message(f"Added match {fighter1} vs {fighter2}", ephemeral=True)
         except sqlite3.Error:
@@ -164,7 +226,7 @@ class BetCog(commands.Cog):
     async def get_bets(self, ctx: discord.Interaction, match_id: Optional[int] = None):
         async def get_page(page: int):
             offset = (page - 1) * PAGE_LENGTH
-            cursor = self.bets.cursor()
+            cursor = self.query.bets.cursor()
             if match_id:
                 emb = discord.Embed(title=f"Bets on {match_id}", color=0xff0f00)
                 cursor.execute(
@@ -273,7 +335,7 @@ class BetCog(commands.Cog):
     # ----------------- helper ----------------- #
     async def _get_thing(self, table: str, id: int, fighter: str=None) -> tuple:
         """Intentionally sql injection vulnerable for internal use only"""
-        cursor = self.bets.cursor()
+        cursor = self.query.bets.cursor()
         match = cursor.execute(f"SELECT * FROM {table.lower()} WHERE id = {id}").fetchone()
         if not match:
             raise commands.CommandError(f"No {table} with id {id} found")
