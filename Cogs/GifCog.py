@@ -38,6 +38,8 @@ class GifCog(commands.Cog):
         elif message.author.bot:
             return
         for attachment in message.attachments:
+            if "tenor" in str(attachment) or "giphy" in str(attachment):
+                pass
             if attachment.content_type in gif_formats:
                 await self.request_approval(f"{attachment.proxy_url}, {message.jump_url} by {message.author}")
         for embed in message.embeds:
