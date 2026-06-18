@@ -1,5 +1,6 @@
 import logging
 import os, discord.interactions
+from urllib.parse import urlparse
 from discord.ext import commands
 from discord.ext.commands import Cog
 
@@ -35,17 +36,20 @@ class GifCog(commands.Cog):
     def _is_filtered_url(url: str | None) -> bool:
         if not url:
             return False
-        url_lower = url.lower()
-        return "tenor" in url_lower or "giphy" in url_lower
+        hostname = urlparse(url).hostname
+        if not hostname:
+            return False
+        hostname = hostname.lower()
+        return hostname == "tenor.com" or hostname.endswith(".tenor.com") or hostname == "giphy.com" or hostname.endswith(".giphy.com")
 
     def _embed_has_filtered_url(self, embed: discord.Embed) -> bool:
         if self._is_filtered_url(embed.url):
             return True
-        if embed.video and self._is_filtered_url(embed.video.url):
+        if embed.video and (self._is_filtered_url(embed.video.url) or self._is_filtered_url(getattr(embed.video, "proxy_url", None))):
             return True
-        if embed.thumbnail and self._is_filtered_url(embed.thumbnail.url):
+        if embed.thumbnail and (self._is_filtered_url(embed.thumbnail.url) or self._is_filtered_url(getattr(embed.thumbnail, "proxy_url", None))):
             return True
-        if embed.image and self._is_filtered_url(embed.image.url):
+        if embed.image and (self._is_filtered_url(embed.image.url) or self._is_filtered_url(getattr(embed.image, "proxy_url", None))):
             return True
         return False
 
