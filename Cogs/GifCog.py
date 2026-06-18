@@ -56,7 +56,7 @@ class GifCog(commands.Cog):
         elif message.author.bot:
             return
         for attachment in message.attachments:
-            if self._is_filtered_url(attachment.url) or self._is_filtered_url(attachment.proxy_url) or self._is_filtered_url(str(attachment)):
+            if self._is_filtered_url(attachment.url) or self._is_filtered_url(attachment.proxy_url):
                 continue
             if attachment.content_type in gif_formats:
                 await self.request_approval(f"{attachment.proxy_url}, {message.jump_url} by {message.author}")
