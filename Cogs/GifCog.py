@@ -29,6 +29,8 @@ class GifView(discord.ui.View):
             await ctx.response.send_message("Couldn't delete the message :man_shrugging:", ephemeral=True)
 
 class GifCog(commands.Cog):
+    FILTERED_GIF_DOMAINS = ("tenor.com", "giphy.com")
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -40,18 +42,15 @@ class GifCog(commands.Cog):
         if not hostname:
             return False
         hostname = hostname.lower()
-        return hostname == "tenor.com" or hostname.endswith(".tenor.com") or hostname == "giphy.com" or hostname.endswith(".giphy.com")
+        return any(hostname == domain or hostname.endswith(f".{domain}") for domain in GifCog.FILTERED_GIF_DOMAINS)
+
+    def _media_has_filtered_url(self, media: object | None) -> bool:
+        if not media:
+            return False
+        return self._is_filtered_url(getattr(media, "url", None)) or self._is_filtered_url(getattr(media, "proxy_url", None))
 
     def _embed_has_filtered_url(self, embed: discord.Embed) -> bool:
-        if self._is_filtered_url(embed.url):
-            return True
-        if embed.video and (self._is_filtered_url(embed.video.url) or self._is_filtered_url(getattr(embed.video, "proxy_url", None))):
-            return True
-        if embed.thumbnail and (self._is_filtered_url(embed.thumbnail.url) or self._is_filtered_url(getattr(embed.thumbnail, "proxy_url", None))):
-            return True
-        if embed.image and (self._is_filtered_url(embed.image.url) or self._is_filtered_url(getattr(embed.image, "proxy_url", None))):
-            return True
-        return False
+        return self._is_filtered_url(embed.url) or self._media_has_filtered_url(embed.video) or self._media_has_filtered_url(embed.thumbnail) or self._media_has_filtered_url(embed.image)
 
     @Cog.listener()
     async def on_message(self, message: discord.Message):
