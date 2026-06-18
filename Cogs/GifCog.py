@@ -31,6 +31,13 @@ class GifCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    @staticmethod
+    def _is_filtered_url(url: str | None) -> bool:
+        if not url:
+            return False
+        url_lower = url.lower()
+        return "tenor" in url_lower or "giphy" in url_lower
+
     @Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.channel.id != submission_id:
@@ -38,11 +45,13 @@ class GifCog(commands.Cog):
         elif message.author.bot:
             return
         for attachment in message.attachments:
-            if "tenor" in str(attachment) or "giphy" in str(attachment):
-                pass
+            if self._is_filtered_url(attachment.url) or self._is_filtered_url(attachment.proxy_url) or self._is_filtered_url(str(attachment)):
+                continue
             if attachment.content_type in gif_formats:
                 await self.request_approval(f"{attachment.proxy_url}, {message.jump_url} by {message.author}")
         for embed in message.embeds:
+            if self._is_filtered_url(embed.url):
+                continue
             if embed.type in gif_formats:
                 await self.request_approval(f"{embed.url}, {message.jump_url} by {message.author}")
 
