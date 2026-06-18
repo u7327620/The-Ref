@@ -38,6 +38,17 @@ class GifCog(commands.Cog):
         url_lower = url.lower()
         return "tenor" in url_lower or "giphy" in url_lower
 
+    def _embed_has_filtered_url(self, embed: discord.Embed) -> bool:
+        if self._is_filtered_url(embed.url):
+            return True
+        if embed.video and self._is_filtered_url(embed.video.url):
+            return True
+        if embed.thumbnail and self._is_filtered_url(embed.thumbnail.url):
+            return True
+        if embed.image and self._is_filtered_url(embed.image.url):
+            return True
+        return False
+
     @Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.channel.id != submission_id:
@@ -50,7 +61,7 @@ class GifCog(commands.Cog):
             if attachment.content_type in gif_formats:
                 await self.request_approval(f"{attachment.proxy_url}, {message.jump_url} by {message.author}")
         for embed in message.embeds:
-            if self._is_filtered_url(embed.url):
+            if self._embed_has_filtered_url(embed):
                 continue
             if embed.type in gif_formats:
                 await self.request_approval(f"{embed.url}, {message.jump_url} by {message.author}")
